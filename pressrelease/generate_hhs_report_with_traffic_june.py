@@ -39,6 +39,7 @@ CHANNEL_COLORS = {
     'Direct': HHS_LIGHT_BLUE,
     'Referral': HHS_TEAL,
     'Organic Social': HHS_ORANGE,
+    'SMS': HHS_GREEN,
     'Other': HHS_GREEN,
 }
 
@@ -125,6 +126,7 @@ def parse_traffic_csv(filename):
         'Organic Social': 'social',
         'Unassigned': 'email',
         'Email': 'email',
+        'SMS': 'sms',   
         'Totals': 'total',
     }
 
@@ -210,6 +212,8 @@ def parse_traffic_csv(filename):
                 'referral_views': safe_int(row, field_cols.get('referral_views')),
                 'email_users': safe_int(row, field_cols.get('email_users')),
                 'email_views': safe_int(row, field_cols.get('email_views')),
+                'sms_users': safe_int(row, field_cols.get('sms_users')),
+                'sms_views': safe_int(row, field_cols.get('sms_views')),
                 'total_users': safe_int(row, field_cols.get('total_users')),
                 'total_views': safe_int(row, field_cols.get('total_views')),
             }
@@ -332,10 +336,10 @@ def parse_and_format_date(page_date_created, first_visit_date):
 
 
 def should_highlight_date(date_obj):
-    """Check if date should be highlighted (published in April 2026)."""
+    """Check if date should be highlighted (published in June 2026)."""
     if not date_obj:
         return False
-    return date_obj.year == 2026 and date_obj.month == 5
+    return date_obj.year == 2026 and date_obj.month == 6
 
 
 def create_traffic_source_pie(data, exclude_landing=True):
@@ -353,9 +357,9 @@ def create_traffic_source_pie(data, exclude_landing=True):
     direct_views = sum(d['direct_views'] for d in filtered_data)
     referral_views = sum(d['referral_views'] for d in filtered_data)
     social_views = sum(d['social_views'] for d in filtered_data)
-    email_views = sum(d['email_views'] for d in filtered_data)
+    sms_views = sum(d['sms_views'] for d in filtered_data)
 
-    total = organic_views + direct_views + referral_views + social_views + email_views
+    total = organic_views + direct_views + referral_views + social_views + sms_views
 
     if total == 0:
         return drawing
@@ -387,11 +391,12 @@ def create_traffic_source_pie(data, exclude_landing=True):
             "color": CHANNEL_COLORS['Organic Social']
         },
         {
-            "label": "Other",
-            "value": email_views,
-            "pct": (email_views / total * 100),
-            "color": CHANNEL_COLORS['Other']
+            "label": "SMS",
+            "value": sms_views,
+            "pct": (sms_views / total * 100),
+            "color": CHANNEL_COLORS['SMS']
         }
+
     ]
 
     # Sort descending by percentage
@@ -420,14 +425,14 @@ def create_traffic_source_pie(data, exclude_landing=True):
     pie.data = [s["value"] for s in segments]
 
     pie.labels = [
-        f'{s["pct"]:.0f}%' if s["pct"] > 5 else ''
+        f'{s["pct"]:.0f}%' if s["pct"] > 4 else ''
         for s in segments
     ]
 
     pie.slices.strokeWidth = 2
     pie.slices.strokeColor = colors.white
     pie.slices.fontName = 'Helvetica-Bold'
-    pie.slices.fontSize = 12
+    pie.slices.fontSize = 10
     pie.slices.fontColor = colors.white
     pie.sideLabels = False
     pie.slices.labelRadius = 0.65
@@ -596,11 +601,11 @@ def create_views_distribution_pie(press_releases, landing_page, grand_total):
             String(
                 legend_x + 15,
                 y - 6,
-                f'{s["label"]} ({s["pct"]:.1f}%)',
+                f'{s["label"]}: {format_compact(s["value"])} ({s["pct"]:.1f}%)',
                 fontName='Helvetica',
                 fontSize=10
-    )
-)
+            )
+        )
 
     drawing.add(String(175, 200, 'Total Views: Landing Page vs Press Releases',
                        fontSize=11, fontName='Helvetica-Bold',
@@ -742,11 +747,9 @@ def create_landing_page_traffic_pie(landing_page):
 
     organic_views = landing_page.get('organic_views', 0)
     direct_views = landing_page.get('direct_views', 0)
-    referral_views = landing_page.get('referral_views', 0)
     social_views = landing_page.get('social_views', 0)
-    email_views = landing_page.get('email_views', 0)
 
-    total = organic_views + direct_views + referral_views + social_views + email_views
+    total = organic_views + direct_views + social_views
 
     if total == 0:
         return drawing
@@ -766,22 +769,10 @@ def create_landing_page_traffic_pie(landing_page):
             "color": CHANNEL_COLORS['Direct']
         },
         {
-            "label": "Referral",
-            "value": referral_views,
-            "pct": (referral_views / total * 100),
-            "color": CHANNEL_COLORS['Referral']
-        },
-        {
             "label": "Organic Social",
             "value": social_views,
             "pct": (social_views / total * 100),
             "color": CHANNEL_COLORS['Organic Social']
-        },
-        {
-            "label": "Other",
-            "value": email_views,
-            "pct": (email_views / total * 100),
-            "color": CHANNEL_COLORS['Other']
         }
     ]
 
@@ -1190,9 +1181,10 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
     top_10_views = sum(pr['total_views'] for pr in press_releases[:10])
     rest_views = total_pr_views - top_10_views
     rest_count = len(press_releases) - 10
+    sms_views = sum(pr['sms_views'] for pr in press_releases)
 
     exec_summary = f"""
-    <p>The HHS.gov Press Room generated <b>{format_number(total_all_views)}</b> total page views in May, up 27% from April and 11% YoY. Strong organic traffic for MAHA focused releases, along with above-average social entries for Lyme Disease post, generated above average volume. 
+    <p>The HHS.gov Press Room generated <b>{format_number(total_all_views)}</b> total page views in June, up 30% from May and 111% year-over-year. Secretary Kennedy's COVID-19 emergency use termination release (6/30) received 11K views in one day, double the daily average for top 10 releases. The SMS channel contributed 3.6% of press release traffic (8,774 views), representing its first meaningful contribution year-to-date.</p>
     <p>The press room landing page accounts for <b>{landing_views/total_all_views*100:.1f}%</b> of total traffic, reinforcing its role as a primary entry point for policy discovery and navigation. The remaining {rest_count} press releases shared <b>{rest_views/total_all_views*100:.1f}%</b> of total press room views.</p>
     """
     story.append(Paragraph(exec_summary, body_style))
@@ -1272,13 +1264,12 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
 
     if landing_page:
         metrics_data = [
-            ['Views', 'Users', 'Organic', 'Direct', 'Referral', 'Social'],
+            ['Views', 'Users', 'Direct', 'Organic', 'Social'],
             [format_number(landing_page['total_views']),
              format_number(landing_page['total_users']),
-             format_number(landing_page['organic_views']),
              format_number(landing_page['direct_views']),
-             format_number(landing_page['referral_views']),
-             format_number(landing_page['social_views'])]
+             format_number(landing_page['organic_views']),
+             format_number(landing_page.get('social_views', 0))]
         ]
 
         metrics_table = Table(metrics_data, colWidths=[1.1*inch, 1.1*inch, 1.0*inch, 1.1*inch, 1.0*inch, 0.9*inch])
@@ -1315,7 +1306,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
     )
     story.append(Spacer(1, 8))
 
-    table_data = [['#', 'Press Release Title', 'Published', 'Views', 'Users', 'Organic', 'Direct', 'Referral', 'Social']]
+    table_data = [['#', 'Press Release Title', 'Published', 'Views', 'Users', 'Organic', 'Direct', 'Referral', 'Social', 'SMS']]
 
     BASE_URL = 'https://www.hhs.gov'
 
@@ -1359,6 +1350,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
             format_number(pr['direct_views']),
             format_number(pr['referral_views']),
             format_number(pr['social_views']),
+            format_number(pr['sms_views']),
         ])
 
     # Column widths with Published date column
