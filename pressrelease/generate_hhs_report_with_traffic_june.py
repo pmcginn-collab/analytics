@@ -46,6 +46,9 @@ CHANNEL_COLORS = {
 # Known 404 URLs to exclude (pages removed after being tracked in GA4)
 KNOWN_404_PATHS = {
     '/press-room/hhs-publishes-whistleblower-form-to-protect-kids.html',
+    '/press-room/fact-sheet-cdc-childhood-immunization-recommendations.html',
+    '/press-room/cdc-acts-presidential-memorandum-update-childhood-immunization-schedule.html',
+    '/press-room/hhs-acts-bar-hospitals-performing-sex-rejecting-procedures-children.html'
 }
 
 
@@ -1184,7 +1187,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
     sms_views = sum(pr['sms_views'] for pr in press_releases)
 
     exec_summary = f"""
-    <p>The HHS.gov Press Room generated <b>{format_number(total_all_views)}</b> total page views in June, up 30% from May and 111% year-over-year. Secretary Kennedy's COVID-19 emergency use termination release (6/30) received 11K views in one day, double the daily average for top 10 releases. The SMS channel contributed 3.6% of press release traffic (8,774 views), representing its first meaningful contribution year-to-date.</p>
+    <p>The HHS.gov Press Room generated <b>{format_number(total_all_views)}</b> total page views in June, up 30% from May and 111% year-over-year. Secretary Kennedy's COVID-19 emergency use termination release (6/30) received <b>24K</b> views in one day. The SMS channel contributed 3.6% of press release traffic (8,774 views), representing its first meaningful contribution year-to-date.</p>
     <p>The press room landing page accounts for <b>{landing_views/total_all_views*100:.1f}%</b> of total traffic, reinforcing its role as a primary entry point for policy discovery and navigation. The remaining {rest_count} press releases shared <b>{rest_views/total_all_views*100:.1f}%</b> of total press room views.</p>
     """
     story.append(Paragraph(exec_summary, body_style))
@@ -1401,6 +1404,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
         "<b>Direct</b>: Visitors who typed the URL or used bookmarks.",
         "<b>Referral</b>: Traffic from links on other websites.",
         "<b>Social</b>: Traffic from social media platforms.",
+        "<b>SMS</b>: Traffic from text message links.",
     ]
     for definition in definitions_list:
         bullet_text = f"&bull; {definition}"
