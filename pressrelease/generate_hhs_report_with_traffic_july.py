@@ -39,8 +39,7 @@ CHANNEL_COLORS = {
     'Direct': HHS_LIGHT_BLUE,
     'Referral': HHS_TEAL,
     'Organic Social': HHS_ORANGE,
-    'SMS': HHS_GREEN,
-    'Other': HHS_GREEN,
+    'Unassigned': HHS_GREEN,
 }
 
 # Known 404 URLs to exclude (pages removed after being tracked in GA4)
@@ -128,8 +127,7 @@ def parse_traffic_csv(filename):
         'Referral': 'referral',
         'Organic Social': 'social',
         'Unassigned': 'discovery',
-        'Email': 'email',
-        'SMS': 'sms',   
+        'Email': 'email',   
         'Totals': 'total',
     }
 
@@ -341,10 +339,10 @@ def parse_and_format_date(page_date_created, first_visit_date):
 
 
 def should_highlight_date(date_obj):
-    """Check if date should be highlighted (published in June 2026)."""
+    """Check if date should be highlighted (published in July 2026)."""
     if not date_obj:
         return False
-    return date_obj.year == 2026 and date_obj.month == 6
+    return date_obj.year == 2026 and date_obj.month == 7
 
 
 def create_traffic_source_pie(data, exclude_landing=True):
@@ -362,10 +360,9 @@ def create_traffic_source_pie(data, exclude_landing=True):
     direct_views = sum(d['direct_views'] for d in filtered_data)
     referral_views = sum(d['referral_views'] for d in filtered_data)
     social_views = sum(d['social_views'] for d in filtered_data)
-    sms_views = sum(d['sms_views'] for d in filtered_data)
-    unassigned_views = sum(d['discovery_views'] for d in filtered_data)
+    discovery_views = sum(d['discovery_views'] for d in filtered_data)
 
-    total = organic_views + direct_views + referral_views + social_views + sms_views
+    total = organic_views + direct_views + referral_views + social_views + discovery_views
 
     if total == 0:
         return drawing
@@ -397,15 +394,9 @@ def create_traffic_source_pie(data, exclude_landing=True):
             "color": CHANNEL_COLORS['Organic Social']
         },
         {
-            "label": "SMS",
-            "value": sms_views,
-            "pct": (sms_views / total * 100),
-            "color": CHANNEL_COLORS['SMS']
-        },
-        {
-            "label": "Unassigned",
-            "value": unassigned_views,
-            "pct": (unassigned_views / total * 100),
+            "label": "Google Search / Unassigned",
+            "value": discovery_views,
+            "pct": (discovery_views / total * 100),
             "color": CHANNEL_COLORS['Unassigned']
         }
 
@@ -760,8 +751,10 @@ def create_landing_page_traffic_pie(landing_page):
     organic_views = landing_page.get('organic_views', 0)
     direct_views = landing_page.get('direct_views', 0)
     social_views = landing_page.get('social_views', 0)
+    referral_views = landing_page.get('referral_views', 0)
+    discovery_views = landing_page.get('discovery_views', 0)
 
-    total = organic_views + direct_views + social_views
+    total = organic_views + direct_views + social_views + referral_views + discovery_views
 
     if total == 0:
         return drawing
@@ -781,10 +774,16 @@ def create_landing_page_traffic_pie(landing_page):
             "color": CHANNEL_COLORS['Direct']
         },
         {
-            "label": "Organic Social",
-            "value": social_views,
-            "pct": (social_views / total * 100),
-            "color": CHANNEL_COLORS['Organic Social']
+            "label": "Referral",
+            "value": referral_views,
+            "pct": (referral_views / total * 100),
+            "color": CHANNEL_COLORS['Referral']
+        },
+        {
+            "label": "Google Search / Unassigned",
+            "value": discovery_views,
+            "pct": (discovery_views / total * 100),
+            "color": CHANNEL_COLORS['Unassigned']
         }
     ]
 
@@ -1196,8 +1195,8 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
     discovery_views = sum(pr['discovery_views'] for pr in press_releases)
 
     exec_summary = f"""
-    <p>The HHS.gov Press Room generated <b>{format_number(total_all_views)}</b> total page views in July 2026, up 37% year-over-year. Multiple releases, including DEA Action Against 7-OH Products (7/01) and Secretary Kennedy's Orange Juice Regulation Update (7/17) generated above-average engagement. Behavioral health quality pledge PR (7/29) was indexed by Google Discovery feed and contributed above-average new mobile visitors.</p>
-    <p>The press room landing page accounts for <b>{landing_views/total_all_views*100:.1f}%</b> of total traffic, reinforcing its role as a primary entry point for policy discovery and navigation. The remaining {rest_count} press releases shared <b>{rest_views/total_all_views*100:.1f}%</b> of total press room views.</p>
+    <p>The HHS.gov Press Room generated <b>{format_number(total_all_views)}</b> total page views in July 2026, up 37% year-over-year. Multiple releases, including DEA Action Against 7-OH Products (7/01) and Secretary Kennedy's Orange Juice Regulation Update (7/17) generated above-average view volume. Behavioral health quality pledge PR (7/29) was indexed by Google Search Android app (Unassigned) which contributed above-average new mobile visitors.</p>
+    <p>The press room landing page accounts for <b>{landing_views/total_all_views*100:.1f}%</b> of total traffic, reinforcing its role as a primary entry point for policy discovery and navigation. The remaining {rest_count} press releases collectively accounted for <b>{rest_views/total_all_views*100:.1f}%</b> of total press room views.</p>
     """
     story.append(Paragraph(exec_summary, body_style))
 
@@ -1276,16 +1275,16 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
 
     if landing_page:
         metrics_data = [
-            ['Views', 'Users', 'Direct', 'Organic', 'Social', 'Discovery'],
+            ['Views', 'Users', 'Direct', 'Organic', 'Google Search/Unassigned', 'Referral'],
             [format_number(landing_page['total_views']),
              format_number(landing_page['total_users']),
              format_number(landing_page['direct_views']),
              format_number(landing_page['organic_views']),
-             format_number(landing_page.get('social_views', 0)),
-             format_number(landing_page.get('discovery_views', 0))]
+             format_number(landing_page.get('discovery_views', 0)),
+             format_number(landing_page.get('referral_views', 0))]
         ]
 
-        metrics_table = Table(metrics_data, colWidths=[1.1*inch, 1.1*inch, 1.0*inch, 1.1*inch, 1.0*inch, 0.9*inch])
+        metrics_table = Table(metrics_data, colWidths=[1.1*inch, 1.1*inch, 1.0*inch, 1.1*inch, 2.0*inch, 1.2*inch])
         metrics_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), HHS_DARK_NAVY),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -1319,7 +1318,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
     )
     story.append(Spacer(1, 8))
 
-    table_data = [['#', 'Press Release Title', 'Published', 'Views', 'Users', 'Organic', 'Direct', 'Referral', 'Social', 'Discovery']]
+    table_data = [['#', 'Press Release Title', 'Published', 'Views', 'Users', 'Organic', 'Direct', 'Referral', 'Social', 'Google Search/Unassigned']]
 
     BASE_URL = 'https://www.hhs.gov'
 
@@ -1367,7 +1366,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
         ])
 
     # Column widths with Published date column
-    pr_table = Table(table_data, colWidths=[0.25*inch, 2.9*inch, 0.6*inch, 0.5*inch, 0.45*inch, 0.5*inch, 0.45*inch, 0.5*inch, 0.45*inch, 0.5*inch], repeatRows=1)
+    pr_table = Table(table_data, colWidths=[0.25*inch, 2.9*inch, 0.6*inch, 0.5*inch, 0.45*inch, 0.5*inch, 0.45*inch, 0.5*inch, 0.45*inch, 1.8*inch], repeatRows=1)
     
     # Build table style with alternating row colors and highlighting
     table_style = [
@@ -1415,7 +1414,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
         "<b>Referral</b>: Traffic from links on other websites.",
         "<b>Social</b>: Traffic from social media platforms.",
         "<b>SMS</b>: Traffic from text message links.",
-        "<b>Discovery</b>: Traffic from Google Discovery/QuickSearch Android app.",
+        "<b>Google Search/ Unassigned</b>: Traffic from Google Discovery/QuickSearch Android app.",
     ]
     for definition in definitions_list:
         bullet_text = f"&bull; {definition}"
