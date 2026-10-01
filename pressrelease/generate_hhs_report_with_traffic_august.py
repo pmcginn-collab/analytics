@@ -1015,8 +1015,8 @@ def create_metrics_infographic(landing_page, press_releases, grand_total, prev_d
     metrics = [
         ('Total Page Views', format_compact(grand_total['total_views']), HHS_DARK_NAVY),
         ('Press Release Views', format_compact(total_pr_views), HHS_DARK_NAVY),
-        ('Total Users', format_compact(grand_total['total_users']), HHS_DARK_NAVY),
-        ('Press Releases', str(len(press_releases)), HHS_DARK_NAVY),
+        ('Total Active Users', format_compact(grand_total['total_users']), HHS_DARK_NAVY),
+        ('Press Releases Viewed', str(len(press_releases)), HHS_DARK_NAVY),
     ]
 
     box_width = 110
@@ -1192,8 +1192,8 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
     discovery_views = sum(pr['discovery_views'] for pr in press_releases)
 
     exec_summary = f"""
-    <p>The HHS.gov Press Room attracted <b>{format_number(total_users)}</b> unique users in August 2026, down slightly from the previous month (-4%). HHS KY Organ Decertification (8/5) and MAHA Food Policy Reforms (8/10) releases generated above-average volume with email and social media promotion.</p>
-    <p>The press room landing page only accounted for <b>{traffic_percentage(landing_views, total_all_views):.1f}%</b> of total traffic, a notable shift from its usual primary entry point for discovery. The <b>{format_number(top_10_views)}</b> press releases collectively accounted for <b>{traffic_percentage(top_10_views, total_all_views):.1f}%</b> of total press room views, the largest share year-to-date.</p>
+    <p>The HHS.gov Press Room attracted <b>{format_number(total_users)}</b> active users in August 2026, down slightly from the previous month (-4%). The two highest-viewed releases benefited from different distribution channels, with social contributing strongly to Kentucky Organ Decertification traffic and email driving substantial traffic to the Food Policy Reforms release.</p>
+    <p>The press room landing page only accounted for <b>{traffic_percentage(landing_views, total_all_views):.1f}%</b> of total traffic, a notable shift from its usual primary entry point for discovery (YTD average is 46%). The top 10 press releases <b>({format_number(top_10_views)})</b> accounted for <b>{traffic_percentage(top_10_views, total_all_views):.1f}%</b> of total press room views, the largest share year-to-date.</p>
     """
     story.append(Paragraph(exec_summary, body_style))
 
@@ -1405,7 +1405,7 @@ def create_pdf_report(csv_file, output_file, dates_file, min_views=0):
     story.append(Paragraph("Key Metrics Definitions", section_style))
     definitions_list = [
         "<b>Views</b>: Total page loads (one person visiting 3 times = 3 views).",
-        "<b>Users</b>: Unique visitors (one person visiting 3 times = 1 user).",
+        "<b>ActiveUsers</b>: Unique visitors (one person visiting 3 times = 1 user).",
         "<b>Organic</b>: Traffic from search engines (Google, Bing).",
         "<b>Direct</b>: Visitors who typed the URL or used bookmarks.",
         "<b>Referral</b>: Traffic from links on other websites.",
